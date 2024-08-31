@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Hello React!</title>
+    <script src="https://cdn.staticfile.org/react/16.4.0/umd/react.development.js"></script>
+    <script src="https://cdn.staticfile.org/react-dom/16.4.0/umd/react-dom.development.js"></script>
+    <script src="https://cdn.staticfile.org/babel-standalone/6.26.0/babel.min.js"></script>
+    <!-- 引入prop-type，用于组件标签props属性进行限制 -->
+    <script src="https://cdn.staticfile.net/prop-types/15.6.1/prop-types.js"></script>
+    <style>
+        .text-center {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="app"></div>
+
+    <script type="text/babel">
+        // #region ========jsx+循环+组件==========
+        const user = {
+            name: '罗测试',
+            imageSize: 100,
+            imageUrl: 'https://react.dev/_next/image?url=%2Fimages%2Fuwu.png&w=64&q=75'
+        }
+        const products = [
+            { title: 'Cabbage', id: 1 },
+            { title: 'Garlic', id: 2 },
+            { title: 'Apple', id: 3 },
+        ]
+        const listItems = products.map(product =>
+            <li key={product.id}>
+                {product.title}
+            </li>
+        )
+        // 函数式组件: 首字母大写，小写会被视为html标签
+        function Head() {
+            // this为非严格模式是window，因为babel翻译转换为严格模式，严格模式的this为undefined
+            // console.log('我是函数内部的this：', this)
+            return <h1 className="text-center">我是头部</h1>
+        }
+        // 类式组件: 必须要继承React.Component
+        class Footer extends React.Component {
+            // render是放在Footer的原型对象上，供实例使用，
+            render(h) {
+                // console.log('我是类式组件render的this：', this)
+                return <h1 className="text-center">我是底部</h1>
+            }
+        }
+        // #endregion
+        // #region ========state==========
+        class Container extends React.Component {
+            //可以直接写赋值语句，是给实例上添加属性
+            exTip = "今天天气好"
+            state = {
+                isHot: true,
+                tips: '我很牛'
+            }
+            // 使用箭头函数，定义时上层作用域中的this
+            changeHotEasy = () => {
+                this.setState({ 'isHot': !this.state.isHot })
+            }
+            constructor(props) {
+                super(props)
+                // this.state = {
+                //     isHot: true,
+                //     tips: '我很牛'
+                // }
+                // 给实例对象添加了一个changeHot方法 = 修改changeHot函数内部的this，指向Container实例
+                // bind返回构造函数，需要调用。call，apply是直接执行
+                this.changeWeather = this.changeHot.bind(this);
+            }
+            changeHot() {
+                console.log('我是类中方法的this', this);
+                // 状态不能直接更改,必须通过setState修改
+                // this.state.isHot = false
+                // setState是合并，不是赋值，修改isHot不影响tips
+                this.setState({ 'isHot': !this.state.isHot })
+            }
+            render(h) {
+                const { isHot, tips } = this.state
+                return (
+                    <div>
+                        <div className="text-center">/*class绑定使用className，属性，内联样式可以通过大括号{ }进行动态绑定*/</div>
+                        <div>
+                            <img className="avatar" src={user.imageUrl} style={{
+                                width: user.imageSize,
+                                height: user.imageSize
+                            }} />
+                        </div>
+
+                        <div className="text-center">/*界面内容使用{ }动态绑定*/</div>
+                        <div>
+                            我的名字:{user.name}
+                            <br />
+                            我的标签:{tips}
+                        </div>
+
+                        <div className="text-center">/*循环相关map*/</div>
+                        <ul>{listItems}</ul>
+
+                        {/*state使用
+                            1.通过this指向原型对象才能找到changeHot方法。
+                            2.changeHot执行是作为onClick回调执行，不是通过实例执行。
+                                所以changeHot内部this是直接调用所以指向window，但是因为babel，所以是undefined
+                            3.
+                        */}
+                        <div className="text-center">/*state使用*/</div>
+                        <h4 onClick={this.changeHot}>1.{this.exTip}{isHot ? '热' : '冷'}</h4>
+                        /*通过bind修改changeHot内部this指向*/
+                        <h4 onClick={this.changeWeather}>2.{this.exTip}{isHot ? '热' : '冷'}</h4>
+                        <h4 onClick={this.changeHot.bind(this)}>3.{this.exTip}{isHot ? '热' : '冷'}</h4>
+                        /*通过箭头函数this指向*/
+                        <h4 onClick={this.changeHotEasy}>4.{this.exTip}{isHot ? '热' : '冷'}</h4>
+                        <h4 onClick={() => this.changeHot()}>5.{this.exTip}{isHot ? '热' : '冷'}</h4>
+                    </div>
+                )
+            }
+        }
+        // #endregion
+        // #region ========props==========
+        class CardList extends React.Component {
+            static propTypes = {
+                // array,number,string,func,boolean...
+                listItems: PropTypes.array.isRequired
+            }
+            static defaultProps = {
+                listItems: [],
+                name: '默认,就算没传，也是可以查到的'
+            }
+            render(h) {
+                return (
+                    <div>
+                        {
+                            this.props.listItems.map(item => {
+                                return <div key={item.id}>{item.id}:{item.title}</div>
+                            })
+                        }
+                    </div>
+                )
+            }
+        }
+        // 对标签属性进行数据类型，必填限制
+        // CardList.propTypes = {
+        //     // array,number,string,func,boolean...
+        //     listItems: PropTypes.array.isRequired
+        // }
+        // // 添加标签属性默认值
+        // CardList.defaultProps = {
+        //     listItems: []
+        // }
+        // #endregion
+        // #region ========refs==========
+        class ContainerRef extends React.Component {
+            // ======字符串命名方式获取========
+            getRefs = () => {
+                console.log(this.refs);
+                console.log(this.myRef1);
+                console.log(this.myRef2);
+            }
+            // ======回调赋值方式获取=======
+            getH2 = () => {
+                console.log(this.h2Ref);
+            }
+            // 通过ref回调函数方式
+            setRefH2 = (event) => {
+                this.h2Ref = event
+            }
+            // ======createRef方式获取=======
+            myRef1 = React.createRef()
+            myRef2 = React.createRef()
+            render(h) {
+                return (
+                    <div>
+                        {/*字符串类型的ref*/}
+                        <Container ref="container" />
+
+                        <div className="text-center">/*props相关*/</div>
+                        <CardList listItems={products} />
+
+                        <div className="text-center">/*refs相关*/</div>
+                        {/*字符串类型的ref*/}
+                        <h1 ref="h1" onClick={() => this.getRefs()} > 点我市市1</h1>
+                        {/*回调函数类型的ref*/}
+                        {/*
+                            ref绑定表达式的情况会触发多次
+                            <h2 ref={(event) => this.h2Ref = event} onClick={() => this.getH2()}> 点我市市2.1</h2>
+                        */}
+                        <h2 ref={this.setRefH2} onClick={() => this.getH22()}> 点我市市2.2</h2>
+                        {/*createRef方式获取的ref*/}
+                        <h1 ref={this.myRef1} onClick={() => this.getRefs()} > 点我市市3</h1>
+                        <h1 ref={this.myRef2} onClick={() => this.getRefs()} > 点我市市4</h1>
+                    </div>
+                )
+            }
+        }
+        // #endregion
+        // #region ========生命周期==========
+        class ComponentsLive extends React.Component {
+            state = {
+                test: 0
+            }
+            constructor(props) {
+                console.log('constructor');
+                super(props)
+            }
+            // 挂载前
+            componentWillMount() {
+                console.log('componentWillMont');
+            }
+            // 挂载后
+            componentDidMount() {
+                console.log('componentDidMont');
+            }
+            changeTest = () => {
+                console.log('调用setState了');
+                this.setState({ test: this.state.test++ })
+            }
+            // 更新前
+            componentWillUpdate() {
+                console.log('componentWillUpdate');
+            }
+            // 更新后
+            componentDidUpdate() {
+                console.log('componentDidUpdate');
+            }
+            // 卸载前
+            componentWillUnmount() {
+                console.log('componentWillUpdate');
+            }
+            render() {
+                console.log('render');
+                return (
+                    <div onClick={this.changeTest}>生命周期</div>
+                )
+            }
+        }
+        // #endregion
+        // ========界面生成==========
+        class Dom1 extends React.Component {
+            getRefs = () => {
+                console.log(this.refs);
+            }
+            render() {
+                return (
+                    <div>
+                        <Head />
+                        <ContainerRef />
+                        <Footer />
+                        <ComponentsLive />
+                    </div>
+                )
+            }
+        }
+        /* 
+            1.react解析组件标签,找到相关租价
+            2.1发现组件是用函数定义的，随后调用该函数。将返回的dom转换为真实dom
+            2.2发现组件是用类定义的，随后new出来该类的实例。并通过实例调用原型上的render方法。将返回的dom转换为真实dom
+        */
+
+        ReactDOM.render(<Dom1 />, document.getElementById('app'))
+    </script>
+
+</body>
+
+</html>
